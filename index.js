@@ -10,11 +10,19 @@ let lotteriesjson = JSON.parse(fs.readFileSync('./lotteries.json', 'utf8'));
 
 
 bot.on("message", msg => {
-    if (msg.content.startsWith("//test")) {
+    if (msg.content.startsWith(prefix + "test")) {
         //createRaffle("testraffle.json")
         msg.channel.sendMessage("success\nsuccess");
     }
     if (msg.content.startsWith(prefix + 'help lottery')){
+    	var res = ('------------------------------------------\n            Lottery Commands\n             ------------------------------------------');
+    	var createCommand = ('Creating a lottery: //lottery create [amount]\n');
+    	var listCommand = ('Retrieve list of active lotteries: //lottery list\n');
+    	var entryCommand = ('Adding an entry: //lottery entry [lottery number] [player]\n');
+    	var drawCommand = ('Draw from lottery: //lottery draw [lottery number]');
+    	msg.channel.sendMessage(createCommand + listCommand + entryCommand + drawCommand);
+    	//var aboutCommand = ('Bot info and source code: //about');
+
 
     }
     if (msg.content.startsWith(prefix + 'about')){
@@ -23,7 +31,7 @@ bot.on("message", msg => {
     if (msg.content.startsWith(prefix + 'create lottery')){
     	let args = msg.content.split(" ");
     	if (args.length != 3){
-    		msg.channel.sendMessage("command arguments incorrect")
+    		msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
     	}
     	else{
     		let res = createLottery(args[2]);
@@ -34,7 +42,7 @@ bot.on("message", msg => {
     if (msg.content.startsWith(prefix + 'entry')){
     	let args = msg.content.split(" ");
     	if (args.length < 3){
-    		msg.channel.sendMessage('command arguments incorrect');
+    		msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
     	}
     	else{
     		var res = addPlayer(args[2], args[1]);
@@ -45,7 +53,7 @@ bot.on("message", msg => {
     if (msg.content.startsWith('//draw')){
     	let args = msg.content.split(" ");
     	if (args.length != 2){
-    		msg.channel.sendMessage('command arguments incorrect');
+    		msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
     	}
     	else{
     		let res = draw(args[1]);
@@ -62,7 +70,7 @@ bot.on("message", msg => {
     	console.log(numLots);
     	var list = ("--------------------\n  Active Lotteries  \n--------------------\n")
     	// console.log(numLots);
-    	for (count = 0; count < numLots; count++){
+    	for (var count = 0; count < numLots; count++){
     		list += (count + ': ' + amounts[count] + ': ' + lotteriesjson.lotteries[amounts[count]].players.length + " players\n");
     	}
     	msg.channel.sendMessage(list);
