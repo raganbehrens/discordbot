@@ -14,6 +14,12 @@ bot.on("message", msg => {
         //createRaffle("testraffle.json")
         msg.channel.sendMessage("success\nsuccess");
     }
+    if (msg.content.startsWith(prefix + 'help lottery')){
+
+    }
+    if (msg.content.startsWith(prefix + 'about')){
+    	msg.channel.sendMessage('This bot is a work in progress.\nSource code can be found at https:\/\/github.com/raganbehrens/discordbot');
+    }
     if (msg.content.startsWith(prefix + 'create lottery')){
     	let args = msg.content.split(" ");
     	if (args.length != 3){
@@ -25,14 +31,15 @@ bot.on("message", msg => {
      		msg.channel.sendMessage(res);
     	}
     }
-    if (msg.content.startsWith(prefix + 'add')){
+    if (msg.content.startsWith(prefix + 'entry')){
     	let args = msg.content.split(" ");
     	if (args.length < 3){
     		msg.channel.sendMessage('command arguments incorrect');
     	}
     	else{
-	    	msg.channel.sendMessage(args[2] + " has been added to the " + args[1] + " lottery");
-    		addPlayer(args[2], args[1]);
+    		var res = addPlayer(args[2], args[1]);
+	    	msg.channel.sendMessage(res);
+
     	}
     }
     if (msg.content.startsWith('//draw')){
@@ -43,6 +50,9 @@ bot.on("message", msg => {
     	else{
     		let res = draw(args[1]);
     		msg.channel.sendMessage(res);
+    		delete lotteriesjson.lotteries[args[1]];
+			fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+
     	}
     }
     if (msg.content.startsWith(prefix + 'list')){
@@ -53,7 +63,7 @@ bot.on("message", msg => {
     	var list = ("--------------------\n  Active Lotteries  \n--------------------\n")
     	// console.log(numLots);
     	for (count = 0; count < numLots; count++){
-    		list += (amounts[count] + ': ' + lotteriesjson.lotteries[amounts[count]].players.length + " players\n");
+    		list += (count + ': ' + amounts[count] + ': ' + lotteriesjson.lotteries[amounts[count]].players.length + " players\n");
     	}
     	msg.channel.sendMessage(list);
     	
@@ -99,7 +109,10 @@ function createLottery(amount){
 }
 
 function addPlayer(name, amount){
-	console.log(lotteriesjson.lotteries[amount].players[0]);
+	//console.log(lotteriesjson.lotteries[amount].players[0]);
+	if(lotteriesjson.lotteries[amount] == null){
+		return ("This lottery doesn't exist");
+	}
 	if(lotteriesjson.lotteries[amount].players.includes('main was ban') == false){
 		console.log("player is not entered");
 		console.log(lotteriesjson);
@@ -111,6 +124,7 @@ function addPlayer(name, amount){
 		console.log(lotteriesjson.lotteries[amount].players)
 		console.log(lotteriesjson);
 		fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+		return (name + " has been added to the " + amount + " lottery");
 		console.log('player entered');
 	}
 	else{
@@ -123,9 +137,14 @@ function draw(amount){
 	numEntries = lotteriesjson.lotteries[amount].players.length
 	var winner = Math.floor((Math.random() * numEntries));
 	var intAmount = parseInt(amount);
-	var pot = winner * intAmount;
-	return(lotteriesjson.lotteries[amount].players[winner] + ' has won ' + pot + ' gp!');
-
+	// var lotteryArr = Object.keys(lotteriesjson.lotteries)
+	// var lotteryNumber = lotteryArr.indexOf('amount');
+	var multiplier = ""
+	if (isLetter(amount.charAt(amount.length-1))){
+		multiplier = amount.charAt(amount.length-1);
+	}
+	var pot = numEntries * intAmount;
+	return(lotteriesjson.lotteries[amount].players[winner] + ' has won ' + pot + multiplier + ' gp!');
 }
 
 function clearAll(){
@@ -142,6 +161,10 @@ function clearAll(){
 	fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
 	console.log(lotteriesjson);
 
+}
+
+function isLetter(c){
+	return c.toLowerCase() != c.toUpperCase();
 }
 // function createRaffle(raffleName){
 // 	console.log("creating new raffle")
