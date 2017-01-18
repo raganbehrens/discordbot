@@ -113,7 +113,7 @@ function addPlayer(name, amount){
 	if(lotteriesjson.lotteries[amount] == null){
 		return ("This lottery doesn't exist");
 	}
-	if(lotteriesjson.lotteries[amount].players.includes('main was ban') == false){
+	if(lotteriesjson.lotteries[amount].players.includes(name) == false){
 		console.log("player is not entered");
 		console.log(lotteriesjson);
 		// var text = ('["' + name + '"]');
