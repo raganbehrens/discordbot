@@ -19,15 +19,7 @@ bot.on("message", msg => {
         // console.log(msg.guild.roles.get("235173777351114752"));
 		// console.log(myRole);
     }
-<<<<<<< HEAD
-    if (msg.content.startsWith(prefix + 'help lottery')){
-    	var res = ('------------------------------------------\n            Lottery Commands\n             ------------------------------------------');
-    	var createCommand = ('Creating a lottery: //lottery create [amount]\n');
-    	var listCommand = ('Retrieve list of active lotteries: //lottery list\n');
-    	var entryCommand = ('Adding an entry: //lottery entry [lottery number] [player]\n');
-    	var drawCommand = ('Draw from lottery: //lottery draw [lottery number]');
-    	msg.channel.sendMessage(createCommand + listCommand + entryCommand + drawCommand);
-=======
+
     if (msg.content.startsWith(prefix + command + ' help')){
     	var res = ('------------------------------------------\n            Lottery Commands             \n------------------------------------------\n');
     	var createCommand = ('Creating a lottery: //lottery create [amount]\n');
@@ -35,16 +27,14 @@ bot.on("message", msg => {
     	var entryCommand = ('Adding an entry: //lottery entry [amount] [player]\n');
     	var drawCommand = ('Draw from lottery: //lottery draw [amount]');
     	msg.channel.sendMessage(res + createCommand + listCommand + entryCommand + drawCommand);
->>>>>>> 7b5f22ccf1f6ade83672974876975d43dd16382c
     	//var aboutCommand = ('Bot info and source code: //about');
-
-
     }
+
     if (msg.content.startsWith(prefix + 'about')){
     	msg.channel.sendMessage('This bot is a work in progress.\nSource code can be found at https:\/\/github.com/raganbehrens/discordbot');
     }
-<<<<<<< HEAD
-    if (msg.content.startsWith(prefix + 'create lottery')){
+
+    if (msg.content.startsWith(prefix + command + ' create')){
     	let args = msg.content.split(" ");
     	if (args.length != 3){
     		msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
@@ -59,7 +49,9 @@ bot.on("message", msg => {
     	let args = msg.content.split(" ");
     	if (args.length < 3){
     		msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
-=======
+        }
+    }
+
     if (msg.content.startsWith(prefix + command + ' create')){
     	if (msg.member.roles.has('256857380615225354') || msg.member.roles.has('256857271051616266')){
 	    	let args = msg.content.split(" ");
@@ -86,36 +78,30 @@ bot.on("message", msg => {
     			var res = addPlayer(args[3], args[2]);
 	    		msg.channel.sendMessage(res);
     		}
->>>>>>> 7b5f22ccf1f6ade83672974876975d43dd16382c
     	}
     	else {
     		msg.channel.sendMessage('Fuck off pleb');
     	}
     }
-<<<<<<< HEAD
-    if (msg.content.startsWith('//draw')){
-    	let args = msg.content.split(" ");
-    	if (args.length != 2){
-    		msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
-=======
-    if (msg.content.startsWith(prefix + command + ' draw')){
-    	if (msg.member.roles.has('256857380615225354') || msg.member.roles.has('256857271051616266')){
-    		let args = msg.content.split(" ");
-    		if (args.length != 3){
-    			msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
-    		}
-    		else{
-    			let res = draw(args[2]);
-    			msg.channel.sendMessage(res);
-    			delete lotteriesjson.lotteries[args[2]];
-				fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
-    		}
->>>>>>> 7b5f22ccf1f6ade83672974876975d43dd16382c
-    	}
-    	else{
-    		msg.channel.sendMessage('Fuck off pleb');
-    	}
-    }
+
+        if (msg.content.startsWith(prefix + command + ' draw')){
+            if (msg.member.roles.has('256857380615225354') || msg.member.roles.has('256857271051616266')){
+                let args = msg.content.split(" ");
+                if (args.length != 3){
+                    msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
+                }
+                else{
+                    let res = draw(args[2]);
+                    msg.channel.sendMessage(res);
+                    delete lotteriesjson.lotteries[args[2]];
+                    fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+                }
+            }
+            else{
+                msg.channel.sendMessage('Fuck off pleb');
+            }
+        }
+    
     if (msg.content.startsWith(prefix + 'list')){
     	console.log(lotteriesjson.lotteries);
     	var numLots = Object.keys(lotteriesjson.lotteries).length;
@@ -123,8 +109,12 @@ bot.on("message", msg => {
     	console.log(numLots);
     	var list = ("--------------------\n  Active Lotteries  \n--------------------\n")
     	// console.log(numLots);
+        var multiplier = ""
     	for (var count = 0; count < numLots; count++){
-    		list += (count + ': ' + amounts[count] + ': ' + lotteriesjson.lotteries[amounts[count]].players.length + " players\n");
+            if (isLetter(amounts[count].charAt(amounts[count].length-1))){
+                multiplier = amounts[count].charAt(amounts[count].length-1);
+            }
+    		list += (count + ': ' + amounts[count] + ': ' + lotteriesjson.lotteries[amounts[count]].players.length + " entries. Pot: " + lotteriesjson.lotteries[amounts[count]].players.length * parseInt(amounts[count]) + multiplier);
     	}
     	msg.channel.sendMessage(list);
     	
@@ -184,7 +174,7 @@ function addPlayer(name, amount){
 		console.log("player is not entered");
 		console.log(lotteriesjson);
 		// var text = ('["' + name + '"]');
-		var text = ('"' + name + '"')
+		var text = ('"' + name + '"' );
 		var jsontext = JSON.parse(text);
 		console.log(jsontext);
 		lotteriesjson.lotteries[amount].players.push(jsontext);
@@ -196,6 +186,9 @@ function addPlayer(name, amount){
 	}
 	else{
 		console.log("player is already entered")
+        lotteriesjson.lotteries[amount].players[name]++;
+        fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+        return (name + "has been entered again")
 	}
 }
 
@@ -233,20 +226,3 @@ function clearAll(){
 function isLetter(c){
 	return c.toLowerCase() != c.toUpperCase();
 }
-// function createRaffle(raffleName){
-// 	console.log("creating new raffle")
-// 	this.name = raffleName
-// 	var lotteryFile = fs.readFileSync('./lottery.json');
-// 	var json = JSON.parse(lotteryFile)
-// 	var txt = ('{"raffles" : [' + '{ "players" : [' + ']}]}');
-// 	var obj = JSON.parse(txt);
-// 	json.push(obj);
-// 	console.log(json)
-// 	fs.open(raffleName, 'w+', function(err, fd) {
-// 		if (err) {
-// 			return console.error(err);
-// 		}
-// 		console.log(raffleName, "opened");
-// 	});
-
-
