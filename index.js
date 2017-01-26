@@ -20,13 +20,19 @@ bot.on("message", msg => {
 		// console.log(myRole);
     }
 
+    if (msg.content.startsWith(prefix + 'help')){
+        msg.channel.sendMessage('Type //lottery help for lottery specific commands.');
+    }
+
     if (msg.content.startsWith(prefix + command + ' help')){
     	var res = ('------------------------------------------\n            Lottery Commands             \n------------------------------------------\n');
     	var createCommand = ('Creating a lottery: //lottery create [amount]\n');
     	var listCommand = ('Retrieve list of active lotteries: //lottery list\n');
-    	var entryCommand = ('Adding an entry: //lottery entry [amount] [player]\n');
-    	var drawCommand = ('Draw from lottery: //lottery draw [amount]');
-    	msg.channel.sendMessage(res + createCommand + listCommand + entryCommand + drawCommand);
+    	var entryCommand = ('Adding an entry: //lottery entry [amount] [# of entries] [player]\n');
+    	var drawCommand = ('Draw from lottery: //lottery draw [amount]\n');
+        var removeCommand = ('Remove player from lottery: //lottery remove [player] [amount]\n');
+        var listPlayersCommand = ('Retrieve list of players in a lottery: //lottery players [amount]');
+    	msg.channel.sendMessage(res + createCommand + listCommand + entryCommand + drawCommand + removeCommand + listPlayersCommand);
     	//var aboutCommand = ('Bot info and source code: //about');
     }
 
@@ -71,11 +77,11 @@ bot.on("message", msg => {
     if (msg.content.startsWith(prefix + command + ' entry')){
     	if (msg.member.roles.has('256857380615225354') || msg.member.roles.has('256857271051616266')){
     		let args = msg.content.split(" ");
-    		if (args.length < 4){
+    		if (args.length < 5){
     			msg.channel.sendMessage('Command arguments incorrect - Type "//lottery help" for usage');
     		}
     		else{
-    			var res = addPlayer(args[3], args[2]);
+    			var res = addPlayer(args[4], args[3], args[2]);
 	    		msg.channel.sendMessage(res);
     		}
     	}
@@ -114,11 +120,13 @@ bot.on("message", msg => {
             if (isLetter(amounts[count].charAt(amounts[count].length-1))){
                 multiplier = amounts[count].charAt(amounts[count].length-1);
             }
-    		list += (count + ': ' + amounts[count] + ': ' + lotteriesjson.lotteries[amounts[count]].players.length + " entries. Pot: " + lotteriesjson.lotteries[amounts[count]].players.length * parseInt(amounts[count]) + multiplier);
+            numEntries = getPot(amounts[count]);
+    		list += (count + ': ' + amounts[count] + ': ' + numEntries + " entries. Pot: " + numEntries * parseInt(amounts[count]) + multiplier);
     	}
     	msg.channel.sendMessage(list);
     	
     }
+
     if (msg.content.startsWith(prefix + 'clear all')){
     	if (msg.member.roles.has('256857380615225354') || msg.member.roles.has('256857271051616266')){
     		clearAll();
@@ -127,6 +135,18 @@ bot.on("message", msg => {
     	else{
     		msg.channel.sendMessage("Fuck off pleb");
     	}
+    }
+
+    if (msg.content.startsWith(prefix + command + ' remove')){
+        let args = msg.content.split(" ");
+        res = removePlayer(args[2], args[3]);
+        msg.channel.sendMessage(res);
+    }
+
+    if (msg.content.startsWith(prefix + command + ' players')){
+        let args = msg.content.split(" ");
+        res = listPlayers(args[2]);
+        msg.channel.sendMessage(res);
     }
 });
 
@@ -141,7 +161,7 @@ function createLottery(amount){
 	//console.log(lotteriesjson);
 	//console.log(lotteriesjson.lotteries["100k"]);
 	if (lotteriesjson.lotteries[amount] == null){
-		var text = ('{"players" : []}');
+		var text = ('{"players" : {}}');
 		var jsontext = JSON.parse(text);
 		lotteriesjson.lotteries[amount] = jsontext
 		console.log(lotteriesjson.lotteries)
@@ -165,32 +185,68 @@ function createLottery(amount){
 
 }
 
-function addPlayer(name, amount){
-	//console.log(lotteriesjson.lotteries[amount].players[0]);
-	if(lotteriesjson.lotteries[amount] == null){
-		return ("This lottery doesn't exist");
-	}
-	if(lotteriesjson.lotteries[amount].players.includes(name) == false){
-		console.log("player is not entered");
-		console.log(lotteriesjson);
-		// var text = ('["' + name + '"]');
-		var text = ('"' + name + '"' );
-		var jsontext = JSON.parse(text);
-		console.log(jsontext);
-		lotteriesjson.lotteries[amount].players.push(jsontext);
-		console.log(lotteriesjson.lotteries[amount].players)
-		console.log(lotteriesjson);
-		fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
-		return (name + " has been added to the " + amount + " lottery");
-		console.log('player entered');
-	}
-	else{
-		console.log("player is already entered")
-        lotteriesjson.lotteries[amount].players[name]++;
+function addPlayer(name, entries, amount){
+    //console.log(lotteriesjson.lotteries[amount].players[0]);
+    if(lotteriesjson.lotteries[amount] == null){
+        return ("This lottery doesn't exist");
+    }
+    if(lotteriesjson.lotteries[amount].players[name] == null){
+        console.log("player is not entered");
+        //console.log(lotteriesjson);
+        // var text = ('["' + name + '"]');
+        //var text = ('{"' + name + '" : 1}' );
+        //var jsontext = JSON.parse(text);
+        //console.log(jsontext);
+        lotteriesjson.lotteries[amount].players[name] = parseInt(entries);
+        //console.log(lotteriesjson.lotteries[amount].players)
+        console.log(lotteriesjson);
         fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
-        return (name + "has been entered again")
-	}
+        return (name + " now has " + entries + " entries in the " + amount + " lottery");
+        console.log('player entered');
+    }
+    else{
+        console.log("player is already entered")
+        lotteriesjson.lotteries[amount].players[name] += parseInt(entries);
+        fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+        return (name + " now has " + lotteriesjson.lotteries[amount].players[name] + " entries in the " + amount + " lottery")
+    }
 }
+
+function getPot(amount){
+    let target = lotteriesjson.lotteries[amount].players
+    var numEntries = 0
+    for (var key in target){
+        numEntries += parseInt(target[key]);
+    }
+    return numEntries
+}
+
+// function addPlayer(name, amount){
+// 	//console.log(lotteriesjson.lotteries[amount].players[0]);
+// 	if(lotteriesjson.lotteries[amount] == null){
+// 		return ("This lottery doesn't exist");
+// 	}
+// 	if(lotteriesjson.lotteries[amount].players.includes(name) == false){
+// 		console.log("player is not entered");
+// 		console.log(lotteriesjson);
+// 		// var text = ('["' + name + '"]');
+// 		var text = ('"' + name + '"' );
+// 		var jsontext = JSON.parse(text);
+// 		console.log(jsontext);
+// 		lotteriesjson.lotteries[amount].players.push(jsontext);
+// 		console.log(lotteriesjson.lotteries[amount].players)
+// 		console.log(lotteriesjson);
+// 		fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+// 		return (name + " has been added to the " + amount + " lottery");
+// 		console.log('player entered');
+// 	}
+// 	else{
+// 		console.log("player is already entered")
+//         lotteriesjson.lotteries[amount].players[name]++;
+//         fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+//         return (name + "has been entered again")
+// 	}
+// }
 
 function draw(amount){
 	console.log("about to draw")
@@ -225,4 +281,27 @@ function clearAll(){
 
 function isLetter(c){
 	return c.toLowerCase() != c.toUpperCase();
+}
+
+function removePlayer(name, amount){
+    let target = lotteriesjson.lotteries[amount].players
+    if (target[name] == null){
+        return (name + ' is not in this lottery.');
+    }
+    else{
+        delete target[name];
+        fs.writeFile('./lotteries.json', JSON.stringify(lotteriesjson), (err) => {if(err) console.error(err)});
+        console.log(target);
+        return (name + ' has been removed this lottery');
+    }
+}
+
+function listPlayers(amount){
+    let target = lotteriesjson.lotteries[amount].players;
+    var res = '---------- 100k ----------\n';
+    for (var key in target){
+        res += (key + ': ' + target[key] + ' entries\n');
+    }
+    console.log(res);
+    return res
 }
